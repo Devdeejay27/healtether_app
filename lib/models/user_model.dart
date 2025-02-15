@@ -1,13 +1,16 @@
 class UserModel {
-  final int id;
-  final String name;
-  final String email;
+  final int id; //unique id for user
+  final String name; // user's full name
+  final String email; // user's email address
 
+  /// Represents a user in the application.
   UserModel({
     required this.id,
     required this.name,
     required this.email,
   });
+
+  //new instance of UserModel from a JSON object
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
       id: json['id'],
