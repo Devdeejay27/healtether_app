@@ -1,17 +1,15 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
-import 'package:healtether_app/services/api_service.dart';
 import 'package:healtether_app/models/user_model.dart';
 
-class UserProvider extends ChangeNotifier {
-  //manages the state of user data and notifies listeners of changes.
-  final ApiService _apiService =
-      ApiService(); //instance of 'ApiService' to fetch user data from an API.
+const String apiUrl = 'https://jsonplaceholder.typicode.com/users';
 
-  List<UserModel> _users =
-      []; //A list of 'UserModel' objects representing the users.
+class UserProvider with ChangeNotifier {
+  List<UserModel> _users = []; //'UserModel' objects representing the users.
   bool _isLoading = false; //indicates if data is currently being fetched.
   String?
-      _errorMessage; // stores any error messages encountered during data fetching.
+      _errorMessage; //stores any error messages encountered during data fetching.
 
   List<UserModel> get users => _users; //Returns the list of users.
   bool get isLoading => _isLoading; //Returns the loading state.
@@ -25,15 +23,44 @@ class UserProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _users = await _apiService.fetchUsers();
+      final response = await http.get(Uri.parse(apiUrl));
+      if (response.statusCode == 200) {
+        final List<dynamic> userData = json.decode(response.body);
+        _users = userData.map((json) => UserModel.fromJson(json)).toList();
+        _filteredUsers = List.from(
+            _users); //initializes filtered users with the full list of users.
+        _errorMessage = null;
+      } else {
+        _errorMessage = 'Failed to load users';
+      }
     } catch (e) {
-      _errorMessage = e.toString();
+      _errorMessage = 'An error occurred: $e';
     }
+
     _isLoading = false;
     notifyListeners();
   }
 
+  List<UserModel> _filteredUsers = []; //stores the filtered list of users.
+  String _searchQuery = '';
+
+  List<UserModel> get filteredUsers =>
+      _filteredUsers; //access to filtered users
+  String get searchQuery => _searchQuery;
+
   void searchUsers(String query) {
-    // Implementation of searchUsers
+    _searchQuery = query; //update search query with new input
+    if (query.isEmpty) {
+      //if search query is empty, display all users
+      _filteredUsers = _users;
+    } else {
+      //filters users based on search query, case doesn't matter
+      _filteredUsers = _users
+          .where((user) =>
+              user.name.toLowerCase().contains(query.toLowerCase()) ||
+              user.email.toLowerCase().contains(query.toLowerCase()))
+          .toList();
+    }
+    notifyListeners(); //notifies listeners of any changes
   }
 }
