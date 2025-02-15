@@ -32,4 +32,8 @@ class UserProvider extends ChangeNotifier {
     _isLoading = false;
     notifyListeners();
   }
+
+  void searchUsers(String query) {
+    // Implementation of searchUsers
+  }
 }
